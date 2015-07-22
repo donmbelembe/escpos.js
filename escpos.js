@@ -3192,7 +3192,13 @@ var cmds = {
 	PD_P50:            [0x1d, 0x7c, 0x08], // Printing Density +50%
 	PD_P37:            [0x1d, 0x7c, 0x07], // Printing Density +37.5%
 	PD_P25:            [0x1d, 0x7c, 0x06], // Printing Density +25%
-	PD_P12:            [0x1d, 0x7c, 0x05]  // Printing Density +12.5%
+	PD_P12:            [0x1d, 0x7c, 0x05],  // Printing Density +12.5%
+
+	// QRCODE
+	QR_SIZE: [0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x43], // QRCODE SIZE
+	QR_ERRLEVEL: [29, 40, 107, 3, 0, 49, 69, 51], // QRCODE ERROR TOLERRENCE LEVEL
+	QR_WRITER_BUFFER: [0x1d, 0x28, 0x6b, 0x2e, 0x00, 0x31, 0x50, 0x30],
+	QR_PRINT: [0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x51, 0x30]
 }
 
 
@@ -3423,6 +3429,20 @@ function _pad (count, _raw) {
 	}	
 }
 
+function _qr (str, size, _raw) {
+	size = size || 6;
+	var encoder = new ns.TextEncoder('utf8');
+	var data = encoder.encode(str);
+	data = Array.prototype.slice.call(data);
+	var buf = []
+	var tmp = [].concat(cmds.QR_WRITER_BUFFER);
+	tmp[3] = data.length + 3; // set buffer length
+
+	buf = buf.concat(cmds.QR_SIZE, size, cmds.QR_ERRLEVEL, tmp, data, cmds.QR_PRINT)
+	_raw(buf);
+
+}	
+
 
 function escpos (_raw) {
 	
@@ -3466,6 +3486,11 @@ function escpos (_raw) {
 
 	print.pad = function(count) {
 		_pad(count, _raw);
+		return print;
+	};
+
+	print.qr = function(str, size) {
+		_qr(str, size, _raw);
 		return print;
 	};
 
