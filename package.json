@@ -1,6 +1,6 @@
 {
   "name": "escpos.js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "escpos protocol, inspired by python-escpos and node-escpos",
   "main": "escpos.js",
   "scripts": {
