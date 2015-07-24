@@ -3116,11 +3116,15 @@ function getImgFromDataUrl (dataUrl) {
 	return img;
 }
 
-function getImageData (img) {
+function getImageData (img, config) {
+	config = config || {};
 	var c = document.createElement('canvas');
 	var ctx = c.getContext('2d');
-	ctx.drawImage(img, 0, 0);
-	return ctx.getImageData(0, 0, img.width, img.height);
+
+	var width = config.width || img.width;
+	var height = config.height || img.height;
+	ctx.drawImage(img, 0, 0, width, height);
+	return ctx.getImageData(0, 0, width, height);
 }
 
 function getPixel (img, x, y) {
@@ -3166,6 +3170,7 @@ var cmds = {
 	TXT_NORMAL: 		[ 0x1b, 0x21, 0x00 ],			// Normal text
 	TXT_2HEIGHT: 		[ 0x1b, 0x21, 0x10 ],			// Double height text
 	TXT_2WIDTH: 		[ 0x1b, 0x21, 0x20 ],			// Double width text
+	TXT_4SQUARE: 		[ 0x1b, 0x21, 0x30 ],
 	TXT_UNDERL_OFF: 	[ 0x1b, 0x2d, 0x00 ],			// Underline font OFF
 	TXT_UNDERL_ON: 		[ 0x1b, 0x2d, 0x01 ],			// Underline font 1-dot ON
 	TXT_UNDERL2_ON: 	[ 0x1b, 0x2d, 0x02 ],			// Underline font 2-dot ON
@@ -3299,9 +3304,14 @@ function _convert_image (img, _raw) {
 
 }
 
-function _image (dataUrl, _raw) {
+function _dataUrl (dataUrl, _raw) {
 	var img = getImgFromDataUrl(dataUrl);
 	var im = getImageData(img);
+	_convert_image(im, _raw);
+}
+
+function _image (img, config, _raw) {
+	var im = getImageData(img, config);
 	_convert_image(im, _raw);
 }
 
@@ -3448,8 +3458,14 @@ function escpos (_raw) {
 	
 	var print = function() {};
 
-	print.image = function(dataUrl) {
-		_image(dataUrl, _raw);
+	print.dataUrl = function(dataUrl) {
+		_dataUrl(dataUrl, _raw);
+		return print;
+	};
+
+	print.image = function(img, config) {
+		config = config || {};
+		_image(img, config, _raw);
 		return print;
 	};
 
@@ -3459,6 +3475,12 @@ function escpos (_raw) {
 		text = encoder.encode(text);
 		text = Array.prototype.slice.call(text);
 		_text(text, encoding, _raw);
+		return print;
+	};
+
+	print.chinese2x = function(flag) {
+		var n = flag ? 1 : 0;
+		_raw([28, 87, n]);
 		return print;
 	};
 
